@@ -3,21 +3,21 @@
 # ---------------------
 
 # On-board 50 MHz clock (CLOCK_50)
-set_location_assignment PIN_AJ4 -to clk
+set_location_assignment PIN_R20 -to clk
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to clk
 
 # KEY[0] for reset (Active-High)
-set_location_assignment PIN_W26 -to reset
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to reset
+set_location_assignment PIN_P11 -to raw_reset
+set_instance_assignment -name IO_STANDARD "1.2-V" -to raw_reset
 
 # ---------------------
 # UART TX & RX
 # ---------------------
 
 # FPGA receives serial data from laptop → RXD (pin AB12)
-set_location_assignment PIN_AB12 -to rx
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to rx
+set_location_assignment PIN_M9 -to rx
+set_instance_assignment -name IO_STANDARD "2.5-V" -to rx
 
 # FPGA sends serial data to laptop → TXD (pin AC12)
-set_location_assignment PIN_AC12 -to tx
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to tx
+set_location_assignment PIN_L9 -to tx
+set_instance_assignment -name IO_STANDARD "2.5-V" -to tx
