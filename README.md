@@ -1,4 +1,4 @@
-# ⚡ FPGA UART Serial Interface (Loopback Logic)
+# ⚡ FPGA UART Serial Interface
 
 A **Verilog-based UART loopback** for the **Terasic Cyclone V GX Starter Kit** FPGA.  
 Incoming serial data is echoed back to the sender, providing instant feedback via USB-UART.
