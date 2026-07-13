@@ -1,90 +1,83 @@
-# ⚡ FPGA UART Serial Interface
+# UART serial loopback RTL
+Synchronous UART receive-to-transmit loopback implemented in SystemVerilog.
 
-A **Verilog-based UART loopback** for the **Terasic Cyclone V GX Starter Kit** FPGA.  
-Incoming serial data is echoed back to the sender, providing instant feedback via USB-UART.
+## Specifications
 
----
+| Parameter | Value |
+| --- | --- |
+| Frame format | 8N1 (1 start, 8 data, 1 stop) |
+| Baud setting | 9600 bps (`BAUD_DIV = 5208`) |
+| System clock | 50 MHz (`clk`) |
+| Reset interface | `raw_reset` input, internal `reset = ~raw_reset` |
+| Top-level ports | `clk`, `raw_reset`, `rx`, `tx` |
+| Loopback path | `data_out` from `uart_rx` is assigned to `data_in` for `uart_tx` |
+| FPGA/board target | TBD (part/board not specified in `fpga/uart.qsf`) |
+| Resource estimate | TBD (no synthesis/fitter report in repository) |
 
-## 📜 Overview
+## Block diagram
 
-This project features a **pure hardware UART loopback**—no CPU or firmware required.
-
-> **Use cases:**
-> - ✅ UART interface testing
-> - ✅ FPGA I/O debugging
-> - ✅ Serial protocol learning
-
-**Specs:**
-- **Baud rate:** `9600` (8N1)
-- **Clock:** `50 MHz`
-- **Modules:** `baud_gen`, `uart_rx`, `uart_tx`, `uart_top`
-
----
-
-## 📂 Directory Layout
-
-```
-src/
-├── uart_top.v      # Main loopback module
-├── uart_tx.v       # Transmitter
-├── uart_rx.v       # Receiver
-├── baud_gen.v      # Baud generator
-sim/
-├── uart_tb.sv      # Testbench
-├── uart_tx_tb.sv   # TX testbench
-optimisation/
-├── uart_top.sdc    # Timing constraints
-fpga/
-└── uart.qsf        # Quartus project file
+```mermaid
+flowchart LR
+  clk[clk] --> BG[baud_gen]
+  raw_reset[raw_reset] --> TOP[uart_top]
+  BG -- tick --> TX[uart_tx]
+  BG -- tick --> RX[uart_rx]
+  rx[rx] --> RX
+  RX -- data_out,data_ready --> TOP
+  TOP -- data_in=start from data_out/data_ready --> TX
+  TX -- tx --> tx[tx]
 ```
 
----
+## Directory layout
 
-## 🔧 Prerequisites
-
-- **Board:** Terasic Cyclone V GX Starter Kit (or 50 MHz FPGA)
-- **Software:** Intel Quartus Prime
-- **Terminal:** PuTTY, Minicom, Tera Term, etc.
-- **Cable:** USB-to-UART
-
----
-
-## 🚀 Getting Started
-
-1. **Build & Flash**
-    - Import RTL files into Quartus
-    - Compile and program via USB-Blaster
-
-2. **Connect Terminal**
-    ```bash
-    minicom -D /dev/ttyUSB0 -b 9600
-    ```
-    *(Update device path as needed)*
-
-3. **Echo Test**
-    - Type in the terminal
-    - FPGA echoes input instantly
-
----
-
-### 🛠 Tweaks
-
-**Baud Rate:**  
-Edit `BAUD_DIV` in `baud_gen.v`:
-
-```verilog
-BAUD_DIV = CLOCK_FREQ / BAUD_RATE
+```text
+.
+├── fpga
+│   └── uart.qsf
+├── optimisation
+│   └── uart_top.sdc
+├── sim
+│   ├── uart_tb.sv
+│   └── uart_tx_tb.sv
+├── src
+│   ├── baud_gen.sv
+│   ├── uart_rx.sv
+│   ├── uart_top.sv
+│   └── uart_tx.sv
+├── dump.vcd
+├── uart_tb.vcd
+├── uart_test
+└── uart_top_test
 ```
 
-For 9600 baud @ 50 MHz:
+## Build & program
 
-```verilog
-BAUD_DIV = 50_000_000 / 9600 ≈ 5208
+1. Open Quartus Prime and create/open a project rooted at this repository.
+2. Add `src/*.sv` as design files.
+3. Set `uart_top` as the top-level entity.
+4. Import assignments from `fpga/uart.qsf` and timing constraints from `optimisation/uart_top.sdc`.
+5. Run Analysis & Synthesis, then Fitter, then Assembler (full compile).
+6. Program the device using Quartus Programmer and a USB-Blaster connection.
+
+## Usage
+
+```bash
+minicom -D /dev/ttyUSB0 -b 9600
 ```
 
-**Startup Message:**  
-Add an FSM in `uart_tx` to send a banner on reset.
+Expected behavior: bytes received on `rx` are decoded by `uart_rx` and sent back on `tx` by `uart_tx`.
 
----
+## Configuration
 
-📜 License: MIT — free for use, modification, and distribution.
+`uart_top` instantiates `baud_gen` with `.BAUD_DIV(5208)`. To change baud rate or clock, update this
+divider with:
+
+```text
+BAUD_DIV = CLOCK_HZ / BAUD_RATE
+```
+
+Example: `50_000_000 / 9600 = 5208.33`, implemented as integer divider value `5208`.
+
+## License
+
+MIT
